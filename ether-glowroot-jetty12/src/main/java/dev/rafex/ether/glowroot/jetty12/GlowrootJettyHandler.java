@@ -51,7 +51,7 @@ import java.util.function.Function;
  * {@code Handler.Wrapper} chain rather than the ether {@code HttpExchange}
  * middleware model.</p>
  *
- * <h3>What it instruments</h3>
+ * <h2>What it instruments</h2>
  * <ul>
  *   <li><b>Transaction type/name</b> — {@code "Web"} + {@code "METHOD /normalized/path"}</li>
  *   <li><b>Response status</b> — {@code http.status} and {@code http.status_class}</li>
@@ -63,7 +63,7 @@ import java.util.function.Function;
  *   <li><b>Error attributes</b> — {@code error} and {@code error.message} on uncaught exceptions</li>
  * </ul>
  *
- * <h3>Usage (Jetty middleware / Kiwi-style registration)</h3>
+ * <h2>Usage (Jetty middleware / Kiwi-style registration)</h2>
  * <pre>{@code
  * final var glowroot = GlowrootJettyHandler.builder()
  *         .healthPath("/health")

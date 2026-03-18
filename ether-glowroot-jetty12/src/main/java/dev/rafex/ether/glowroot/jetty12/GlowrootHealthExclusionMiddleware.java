@@ -63,7 +63,12 @@ public final class GlowrootHealthExclusionMiddleware implements Middleware {
 		this.excludedPaths = Set.copyOf(excludedPaths);
 	}
 
-	/** Creates an instance with the given exact paths. */
+	/**
+	 * Creates an instance with the given exact paths.
+	 *
+	 * @param paths paths to suppress (e.g. {@code "/ping"}, {@code "/status"})
+	 * @return a new {@link GlowrootHealthExclusionMiddleware} for those paths
+	 */
 	public static GlowrootHealthExclusionMiddleware of(final String... paths) {
 		return new GlowrootHealthExclusionMiddleware(Set.of(paths));
 	}

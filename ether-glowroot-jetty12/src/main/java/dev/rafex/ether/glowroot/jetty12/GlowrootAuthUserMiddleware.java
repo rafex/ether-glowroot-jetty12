@@ -56,6 +56,12 @@ public final class GlowrootAuthUserMiddleware implements Middleware {
 
 	private final Function<HttpExchange, String> userExtractor;
 
+	/**
+	 * Creates a middleware with the given user-extractor function.
+	 *
+	 * @param userExtractor function that derives the user identifier from an
+	 *                      {@link HttpExchange}; must not be {@code null}
+	 */
 	public GlowrootAuthUserMiddleware(final Function<HttpExchange, String> userExtractor) {
 		this.userExtractor = Objects.requireNonNull(userExtractor, "userExtractor must not be null");
 	}

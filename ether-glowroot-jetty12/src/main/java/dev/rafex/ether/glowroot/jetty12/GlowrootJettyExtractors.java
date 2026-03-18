@@ -67,6 +67,8 @@ public final class GlowrootJettyExtractors {
 	 * <p>The raw {@code context} object is converted via {@code toString()};
 	 * implementors of {@link dev.rafex.ether.http.jetty12.TokenVerifier} should
 	 * ensure the context object returns the user subject from {@code toString()}.</p>
+	 *
+	 * @return extractor function that yields the authenticated user, or {@code null}
 	 */
 	public static Function<HttpExchange, String> authUser() {
 		return exchange -> {
@@ -82,6 +84,7 @@ public final class GlowrootJettyExtractors {
 	 * Returns an extractor that reads the value of a specific HTTP request header.
 	 *
 	 * @param headerName the header name (case-insensitive per HTTP spec)
+	 * @return extractor function that yields the header value, or {@code null} if absent
 	 */
 	public static Function<HttpExchange, String> header(final String headerName) {
 		return exchange -> {
@@ -95,6 +98,8 @@ public final class GlowrootJettyExtractors {
 	/**
 	 * Returns an extractor for the {@code X-Request-Id} header, the de-facto
 	 * standard for HTTP request correlation.
+	 *
+	 * @return extractor function that yields the {@code X-Request-Id} header value, or {@code null}
 	 */
 	public static Function<HttpExchange, String> xRequestId() {
 		return header("X-Request-Id");
@@ -104,6 +109,8 @@ public final class GlowrootJettyExtractors {
 	 * Returns an extractor for the client IP address, preferring
 	 * {@code X-Forwarded-For} (set by reverse proxies / load-balancers) over
 	 * the direct remote address.
+	 *
+	 * @return extractor function that yields the client IP address, or {@code null}
 	 */
 	public static Function<HttpExchange, String> clientIp() {
 		return exchange -> {

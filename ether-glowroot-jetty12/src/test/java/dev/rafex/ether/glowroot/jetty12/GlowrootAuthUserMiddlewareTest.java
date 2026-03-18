@@ -1,0 +1,120 @@
+package dev.rafex.ether.glowroot.jetty12;
+
+/*-
+ * #%L
+ * ether-glowroot-jetty12
+ * %%
+ * Copyright (C) 2025 - 2026 Raúl Eduardo González Argote
+ * %%
+ * Test — not distributed.
+ * #L%
+ */
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+@DisplayName("GlowrootAuthUserMiddleware")
+class GlowrootAuthUserMiddlewareTest {
+
+	/* ── constructor guard ── */
+
+	@Test
+	@DisplayName("null extractor throws NullPointerException")
+	void nullExtractorThrows() {
+		assertThrows(NullPointerException.class,
+				() -> new GlowrootAuthUserMiddleware(null));
+	}
+
+	/* ── happy path ── */
+
+	@Test
+	@DisplayName("delegates to the next handler when user is present")
+	void delegatesWithUser() throws Exception {
+		final var called = new AtomicBoolean(false);
+		final var middleware = new GlowrootAuthUserMiddleware(ex -> "user-42");
+		final var wrapped = middleware.wrap(ex -> {
+			called.set(true);
+			return true;
+		});
+
+		wrapped.handle(new TestHttpExchange("GET", "/api/profile"));
+		assertTrue(called.get());
+	}
+
+	@Test
+	@DisplayName("delegates to the next handler when extractor returns null")
+	void delegatesWithNullUser() throws Exception {
+		final var called = new AtomicBoolean(false);
+		final var middleware = new GlowrootAuthUserMiddleware(ex -> null);
+		final var wrapped = middleware.wrap(ex -> {
+			called.set(true);
+			return true;
+		});
+
+		wrapped.handle(new TestHttpExchange("GET", "/api/public"));
+		assertTrue(called.get());
+	}
+
+	@Test
+	@DisplayName("delegates to the next handler when extractor returns blank")
+	void delegatesWithBlankUser() throws Exception {
+		final var called = new AtomicBoolean(false);
+		final var middleware = new GlowrootAuthUserMiddleware(ex -> "   ");
+		final var wrapped = middleware.wrap(ex -> {
+			called.set(true);
+			return true;
+		});
+
+		wrapped.handle(new TestHttpExchange("GET", "/api/public"));
+		assertTrue(called.get());
+	}
+
+	/* ── extractor exception safety ── */
+
+	@Test
+	@DisplayName("extractor exception does not propagate — next handler is still called")
+	void extractorExceptionIsSilenced() throws Exception {
+		final var called = new AtomicBoolean(false);
+		final var middleware = new GlowrootAuthUserMiddleware(ex -> {
+			throw new RuntimeException("extractor-boom");
+		});
+		final var wrapped = middleware.wrap(ex -> {
+			called.set(true);
+			return true;
+		});
+
+		// Must NOT throw; the extractor failure is silenced
+		assertDoesNotThrow(() -> wrapped.handle(new TestHttpExchange("GET", "/api/data")));
+		assertTrue(called.get());
+	}
+
+	/* ── next handler exceptions ── */
+
+	@Test
+	@DisplayName("exception from next handler is propagated")
+	void nextHandlerExceptionPropagates() {
+		final var middleware = new GlowrootAuthUserMiddleware(ex -> "user-1");
+		final var wrapped = middleware.wrap(ex -> {
+			throw new RuntimeException("handler-boom");
+		});
+
+		assertThrows(RuntimeException.class,
+				() -> wrapped.handle(new TestHttpExchange("GET", "/api/data")));
+	}
+
+	/* ── return value ── */
+
+	@Test
+	@DisplayName("returns boolean from the next handler")
+	void returnsNextResult() throws Exception {
+		final var middlewareTrue = new GlowrootAuthUserMiddleware(ex -> "u");
+		final var middlewareFalse = new GlowrootAuthUserMiddleware(ex -> "u");
+
+		assertTrue(middlewareTrue.wrap(ex -> true).handle(new TestHttpExchange("GET", "/x")));
+		assertFalse(middlewareFalse.wrap(ex -> false).handle(new TestHttpExchange("GET", "/x")));
+	}
+}

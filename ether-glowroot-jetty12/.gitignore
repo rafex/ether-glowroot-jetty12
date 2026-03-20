@@ -1,30 +1,30 @@
-# Compiled class files
+# Compiled class file
 *.class
 
-# Log files
-*.log
+# Eclipse files
+.project
+.classpath
+.settings/
+.factorypath
+.apt_generated
+.springBeans
 
-# BlueJ files
-*.ctxt
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
+# Visual Studio Code
+.vscode/
 
-# Package Files
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
-
-# virtual machine crash logs
-hs_err_pid*
-replay_pid*
+# NetBeans
+nbproject/
+nb-configuration.xml
 
 # Maven
 target/
+**/target/
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
@@ -33,34 +33,34 @@ release.properties
 dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
-.mvn/wrapper/maven-wrapper.jar
+.mvn/wrapper/maven-wrapper.properties
 
-# IDE - IntelliJ IDEA
-.idea/
-*.iws
-*.iml
-*.ipr
-out/
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
 
-# IDE - Eclipse
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-# IDE - NetBeans
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-
-# IDE - VS Code
-.vscode/
-
-# OS
+# Mac
 .DS_Store
-Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Package files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# System files
+*.swp
+*.swo
+*~

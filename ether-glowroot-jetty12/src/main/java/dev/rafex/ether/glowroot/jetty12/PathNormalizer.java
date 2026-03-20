@@ -30,23 +30,23 @@ import java.util.regex.Pattern;
 
 final class PathNormalizer {
 
-	private static final Pattern UUID_PATTERN = Pattern
-			.compile("/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(?=/|$)");
-	private static final Pattern OBJECTID_PATTERN = Pattern.compile("/[0-9a-fA-F]{24}(?=/|$)");
-	private static final Pattern NUMBER_PATTERN = Pattern.compile("/\\d{2,}(?=/|$)");
-	private static final Pattern MULTIPLE_SLASHES_PATTERN = Pattern.compile("/{2,}");
+    private static final Pattern UUID_PATTERN = Pattern
+            .compile("/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(?=/|$)");
+    private static final Pattern OBJECTID_PATTERN = Pattern.compile("/[0-9a-fA-F]{24}(?=/|$)");
+    private static final Pattern NUMBER_PATTERN = Pattern.compile("/\\d{2,}(?=/|$)");
+    private static final Pattern MULTIPLE_SLASHES_PATTERN = Pattern.compile("/{2,}");
 
-	private PathNormalizer() {
-	}
+    private PathNormalizer() {
+    }
 
-	static String normalize(final String path) {
-		if (path == null || path.isEmpty()) {
-			return "unknown";
-		}
+    static String normalize(final String path) {
+        if (path == null || path.isEmpty()) {
+            return "unknown";
+        }
 
-		String result = MULTIPLE_SLASHES_PATTERN.matcher(path).replaceAll("/");
-		result = UUID_PATTERN.matcher(result).replaceAll("/:id");
-		result = OBJECTID_PATTERN.matcher(result).replaceAll("/:id");
-		return NUMBER_PATTERN.matcher(result).replaceAll("/:n");
-	}
+        String result = MULTIPLE_SLASHES_PATTERN.matcher(path).replaceAll("/");
+        result = UUID_PATTERN.matcher(result).replaceAll("/:id");
+        result = OBJECTID_PATTERN.matcher(result).replaceAll("/:id");
+        return NUMBER_PATTERN.matcher(result).replaceAll("/:n");
+    }
 }

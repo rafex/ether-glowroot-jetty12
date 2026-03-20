@@ -1,5 +1,10 @@
 package dev.rafex.ether.glowroot.jetty12;
 
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import org.glowroot.agent.api.Glowroot;
+
 /*-
  * #%L
  * ether-glowroot-jetty12
@@ -28,22 +33,23 @@ package dev.rafex.ether.glowroot.jetty12;
 
 import dev.rafex.ether.http.core.HttpHandler;
 import dev.rafex.ether.http.core.Middleware;
-import org.glowroot.agent.api.Glowroot;
-
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Middleware that suppresses Glowroot slow-transaction alerts for
  * infrastructure paths such as health checks, readiness probes, and metrics.
  *
- * <p>For matching paths the slow-transaction threshold is raised to
+ * <p>
+ * For matching paths the slow-transaction threshold is raised to
  * {@link Long#MAX_VALUE} milliseconds, so they never appear in Glowroot's
- * slow-trace list. They will still be recorded normally; only the
- * <em>slow</em> flag is suppressed.</p>
+ * slow-trace list. They will still be recorded normally; only the <em>slow</em>
+ * flag is suppressed.
+ * </p>
  *
- * <p>Use {@link #defaults()} for the most common Kubernetes/Docker health
- * endpoints, or {@link #of(String...)} to specify your own set:</p>
+ * <p>
+ * Use {@link #defaults()} for the most common Kubernetes/Docker health
+ * endpoints, or {@link #of(String...)} to specify your own set:
+ * </p>
+ * 
  * <pre>{@code
  * // Default paths: /health, /ready, /live, /metrics
  * middlewareRegistry.add(GlowrootHealthExclusionMiddleware.defaults());
@@ -54,42 +60,42 @@ import java.util.concurrent.TimeUnit;
  */
 public final class GlowrootHealthExclusionMiddleware implements Middleware {
 
-	/** Paths used by {@link #defaults()}. */
-	public static final Set<String> DEFAULT_PATHS = Set.of("/health", "/ready", "/live", "/metrics");
+    /** Paths used by {@link #defaults()}. */
+    public static final Set<String> DEFAULT_PATHS = Set.of("/health", "/ready", "/live", "/metrics");
 
-	private final Set<String> excludedPaths;
+    private final Set<String> excludedPaths;
 
-	private GlowrootHealthExclusionMiddleware(final Set<String> excludedPaths) {
-		this.excludedPaths = Set.copyOf(excludedPaths);
-	}
+    private GlowrootHealthExclusionMiddleware(final Set<String> excludedPaths) {
+        this.excludedPaths = Set.copyOf(excludedPaths);
+    }
 
-	/**
-	 * Creates an instance with the given exact paths.
-	 *
-	 * @param paths paths to suppress (e.g. {@code "/ping"}, {@code "/status"})
-	 * @return a new {@link GlowrootHealthExclusionMiddleware} for those paths
-	 */
-	public static GlowrootHealthExclusionMiddleware of(final String... paths) {
-		return new GlowrootHealthExclusionMiddleware(Set.of(paths));
-	}
+    /**
+     * Creates an instance with the given exact paths.
+     *
+     * @param paths paths to suppress (e.g. {@code "/ping"}, {@code "/status"})
+     * @return a new {@link GlowrootHealthExclusionMiddleware} for those paths
+     */
+    public static GlowrootHealthExclusionMiddleware of(final String... paths) {
+        return new GlowrootHealthExclusionMiddleware(Set.of(paths));
+    }
 
-	/** Creates an instance excluding {@link #DEFAULT_PATHS}. */
-	public static GlowrootHealthExclusionMiddleware defaults() {
-		return new GlowrootHealthExclusionMiddleware(DEFAULT_PATHS);
-	}
+    /** Creates an instance excluding {@link #DEFAULT_PATHS}. */
+    public static GlowrootHealthExclusionMiddleware defaults() {
+        return new GlowrootHealthExclusionMiddleware(DEFAULT_PATHS);
+    }
 
-	@Override
-	public HttpHandler wrap(final HttpHandler next) {
-		return exchange -> {
-			final var path = exchange.path();
-			if (path != null && excludedPaths.contains(path)) {
-				try {
-					Glowroot.setTransactionSlowThreshold(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-				} catch (final Throwable ignore) {
-					// Glowroot agent not present; do not affect request
-				}
-			}
-			return next.handle(exchange);
-		};
-	}
+    @Override
+    public HttpHandler wrap(final HttpHandler next) {
+        return exchange -> {
+            final var path = exchange.path();
+            if (path != null && excludedPaths.contains(path)) {
+                try {
+                    Glowroot.setTransactionSlowThreshold(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+                } catch (final Throwable ignore) {
+                    // Glowroot agent not present; do not affect request
+                }
+            }
+            return next.handle(exchange);
+        };
+    }
 }

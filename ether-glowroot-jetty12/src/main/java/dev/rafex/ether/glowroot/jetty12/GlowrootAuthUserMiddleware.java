@@ -1,5 +1,10 @@
 package dev.rafex.ether.glowroot.jetty12;
 
+import java.util.Objects;
+import java.util.function.Function;
+
+import org.glowroot.agent.api.Glowroot;
+
 /*-
  * #%L
  * ether-glowroot-jetty12
@@ -29,56 +34,58 @@ package dev.rafex.ether.glowroot.jetty12;
 import dev.rafex.ether.http.core.HttpExchange;
 import dev.rafex.ether.http.core.HttpHandler;
 import dev.rafex.ether.http.core.Middleware;
-import org.glowroot.agent.api.Glowroot;
-
-import java.util.Objects;
-import java.util.function.Function;
 
 /**
  * Middleware that sets the authenticated user on the Glowroot transaction.
  *
- * <p>Calls {@link Glowroot#setTransactionUser(String)} with the value returned
- * by a configurable {@code userExtractor} function. If the extractor returns
- * {@code null} or blank, the user is not set.</p>
+ * <p>
+ * Calls {@link Glowroot#setTransactionUser(String)} with the value returned by
+ * a configurable {@code userExtractor} function. If the extractor returns
+ * {@code null} or blank, the user is not set.
+ * </p>
  *
- * <p>For Jetty-specific extraction from JWT auth context use
- * {@link GlowrootJettyExtractors#authUser()} to obtain the extractor:</p>
+ * <p>
+ * For Jetty-specific extraction from JWT auth context use
+ * {@link GlowrootJettyExtractors#authUser()} to obtain the extractor:
+ * </p>
+ * 
  * <pre>{@code
- * middlewareRegistry.add(
- *     new GlowrootAuthUserMiddleware(GlowrootJettyExtractors.authUser()));
+ * middlewareRegistry.add(new GlowrootAuthUserMiddleware(GlowrootJettyExtractors.authUser()));
  * }</pre>
  *
- * <p>Setting the user enables Glowroot's <em>"User recording"</em> — you can
+ * <p>
+ * Setting the user enables Glowroot's <em>"User recording"</em> — you can
  * search all slow traces for a specific user, invaluable for debugging
- * user-specific issues.</p>
+ * user-specific issues.
+ * </p>
  */
 public final class GlowrootAuthUserMiddleware implements Middleware {
 
-	private final Function<HttpExchange, String> userExtractor;
+    private final Function<HttpExchange, String> userExtractor;
 
-	/**
-	 * Creates a middleware with the given user-extractor function.
-	 *
-	 * @param userExtractor function that derives the user identifier from an
-	 *                      {@link HttpExchange}; must not be {@code null}
-	 */
-	public GlowrootAuthUserMiddleware(final Function<HttpExchange, String> userExtractor) {
-		this.userExtractor = Objects.requireNonNull(userExtractor, "userExtractor must not be null");
-	}
+    /**
+     * Creates a middleware with the given user-extractor function.
+     *
+     * @param userExtractor function that derives the user identifier from an
+     *                      {@link HttpExchange}; must not be {@code null}
+     */
+    public GlowrootAuthUserMiddleware(final Function<HttpExchange, String> userExtractor) {
+        this.userExtractor = Objects.requireNonNull(userExtractor, "userExtractor must not be null");
+    }
 
-	@Override
-	public HttpHandler wrap(final HttpHandler next) {
-		return exchange -> {
-			try {
-				final var user = userExtractor.apply(exchange);
-				if (user != null && !user.isBlank()) {
-					Glowroot.setTransactionUser(user);
-					Glowroot.addTransactionAttribute("auth.user", user);
-				}
-			} catch (final Throwable ignore) {
-				// Extractor or Glowroot failure must never affect the request
-			}
-			return next.handle(exchange);
-		};
-	}
+    @Override
+    public HttpHandler wrap(final HttpHandler next) {
+        return exchange -> {
+            try {
+                final var user = userExtractor.apply(exchange);
+                if (user != null && !user.isBlank()) {
+                    Glowroot.setTransactionUser(user);
+                    Glowroot.addTransactionAttribute("auth.user", user);
+                }
+            } catch (final Throwable ignore) {
+                // Extractor or Glowroot failure must never affect the request
+            }
+            return next.handle(exchange);
+        };
+    }
 }

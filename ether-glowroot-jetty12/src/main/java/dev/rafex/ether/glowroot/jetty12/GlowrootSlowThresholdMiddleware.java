@@ -1,5 +1,11 @@
 package dev.rafex.ether.glowroot.jetty12;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import org.glowroot.agent.api.Glowroot;
+
 /*-
  * #%L
  * ether-glowroot-jetty12
@@ -28,97 +34,97 @@ package dev.rafex.ether.glowroot.jetty12;
 
 import dev.rafex.ether.http.core.HttpHandler;
 import dev.rafex.ether.http.core.Middleware;
-import org.glowroot.agent.api.Glowroot;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Middleware that applies per-route slow-transaction thresholds in Glowroot.
  *
- * <p>Different endpoints have different latency characteristics — a PDF export
- * is naturally slower than an auth check. This middleware lets you specify
+ * <p>
+ * Different endpoints have different latency characteristics — a PDF export is
+ * naturally slower than an auth check. This middleware lets you specify
  * distinct thresholds so Glowroot's slow-trace alerts are meaningful for every
- * route, not just a single global value.</p>
+ * route, not just a single global value.
+ * </p>
  *
- * <p>Route matching uses {@link PathNormalizer} so patterns with path variables
+ * <p>
+ * Route matching uses {@link PathNormalizer} so patterns with path variables
  * (e.g. {@code /users/:id}) match any concrete URL like
- * {@code /users/550e8400-…}.</p>
+ * {@code /users/550e8400-…}.
+ * </p>
  *
- * <p>Build with the fluent {@link Builder}:</p>
+ * <p>
+ * Build with the fluent {@link Builder}:
+ * </p>
+ * 
  * <pre>{@code
- * middlewareRegistry.add(
- *     GlowrootSlowThresholdMiddleware.builder()
- *         .defaultThreshold(2_000)             // 2 s for everything else
+ * middlewareRegistry.add(GlowrootSlowThresholdMiddleware.builder().defaultThreshold(2_000) // 2 s for everything else
  *         .threshold("/api/export/:id", 30_000) // 30 s for exports
- *         .threshold("/api/auth/login", 500)    // 500 ms for login
+ *         .threshold("/api/auth/login", 500) // 500 ms for login
  *         .build());
  * }</pre>
  */
 public final class GlowrootSlowThresholdMiddleware implements Middleware {
 
-	private final Map<String, Long> thresholdByNormalizedPath;
-	private final long defaultThresholdMs;
+    private final Map<String, Long> thresholdByNormalizedPath;
+    private final long defaultThresholdMs;
 
-	private GlowrootSlowThresholdMiddleware(final Map<String, Long> thresholds, final long defaultThresholdMs) {
-		this.thresholdByNormalizedPath = Map.copyOf(thresholds);
-		this.defaultThresholdMs = defaultThresholdMs;
-	}
+    private GlowrootSlowThresholdMiddleware(final Map<String, Long> thresholds, final long defaultThresholdMs) {
+        this.thresholdByNormalizedPath = Map.copyOf(thresholds);
+        this.defaultThresholdMs = defaultThresholdMs;
+    }
 
-	/** Returns a new {@link Builder}. */
-	public static Builder builder() {
-		return new Builder();
-	}
+    /** Returns a new {@link Builder}. */
+    public static Builder builder() {
+        return new Builder();
+    }
 
-	@Override
-	public HttpHandler wrap(final HttpHandler next) {
-		return exchange -> {
-			final var normalized = PathNormalizer.normalize(exchange.path());
-			final var threshold = thresholdByNormalizedPath.getOrDefault(normalized, defaultThresholdMs);
-			if (threshold > 0) {
-				try {
-					Glowroot.setTransactionSlowThreshold(threshold, TimeUnit.MILLISECONDS);
-				} catch (final Throwable ignore) {
-					// Glowroot agent not present; do not affect request
-				}
-			}
-			return next.handle(exchange);
-		};
-	}
+    @Override
+    public HttpHandler wrap(final HttpHandler next) {
+        return exchange -> {
+            final var normalized = PathNormalizer.normalize(exchange.path());
+            final var threshold = thresholdByNormalizedPath.getOrDefault(normalized, defaultThresholdMs);
+            if (threshold > 0) {
+                try {
+                    Glowroot.setTransactionSlowThreshold(threshold, TimeUnit.MILLISECONDS);
+                } catch (final Throwable ignore) {
+                    // Glowroot agent not present; do not affect request
+                }
+            }
+            return next.handle(exchange);
+        };
+    }
 
-	/* ── Builder ── */
+    /* ── Builder ── */
 
-	public static final class Builder {
+    public static final class Builder {
 
-		private final Map<String, Long> thresholds = new HashMap<>();
-		private long defaultThresholdMs = 2_000L;
+        private final Map<String, Long> thresholds = new HashMap<>();
+        private long defaultThresholdMs = 2_000L;
 
-		private Builder() {
-		}
+        private Builder() {
+        }
 
-		/**
-		 * Registers a slow threshold for an exact normalized path.
-		 *
-		 * @param normalizedPath path with placeholders, e.g. {@code "/users/:id"}
-		 * @param thresholdMs    threshold in milliseconds
-		 */
-		public Builder threshold(final String normalizedPath, final long thresholdMs) {
-			thresholds.put(normalizedPath, thresholdMs);
-			return this;
-		}
+        /**
+         * Registers a slow threshold for an exact normalized path.
+         *
+         * @param normalizedPath path with placeholders, e.g. {@code "/users/:id"}
+         * @param thresholdMs    threshold in milliseconds
+         */
+        public Builder threshold(final String normalizedPath, final long thresholdMs) {
+            thresholds.put(normalizedPath, thresholdMs);
+            return this;
+        }
 
-		/**
-		 * Sets the default threshold applied to paths not explicitly configured.
-		 * Default is {@code 2000} ms.
-		 */
-		public Builder defaultThreshold(final long thresholdMs) {
-			this.defaultThresholdMs = thresholdMs;
-			return this;
-		}
+        /**
+         * Sets the default threshold applied to paths not explicitly configured.
+         * Default is {@code 2000} ms.
+         */
+        public Builder defaultThreshold(final long thresholdMs) {
+            this.defaultThresholdMs = thresholdMs;
+            return this;
+        }
 
-		public GlowrootSlowThresholdMiddleware build() {
-			return new GlowrootSlowThresholdMiddleware(thresholds, defaultThresholdMs);
-		}
-	}
+        public GlowrootSlowThresholdMiddleware build() {
+            return new GlowrootSlowThresholdMiddleware(thresholds, defaultThresholdMs);
+        }
+    }
 }

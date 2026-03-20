@@ -7,13 +7,13 @@
 	<parent>
 		<groupId>dev.rafex.ether.parent</groupId>
 		<artifactId>ether-parent</artifactId>
-		<version>5.0.1-v20260304</version>
+		<version>8.0.0-SNAPSHOT</version>
 		<relativePath>../../ether-parent/ether-parent/pom.xml</relativePath>
 	</parent>
 
 	<groupId>dev.rafex.ether.glowroot</groupId>
 	<artifactId>ether-glowroot-jetty12</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
+	<version>8.0.0-SNAPSHOT</version>
 
 	<packaging>jar</packaging>
 	<name>${project.artifactId}</name>
@@ -57,13 +57,6 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<glowroot-agent-api.version>0.14.0-beta.3</glowroot-agent-api.version>
-		<ether-http-core.version>4.0.0-v20260304</ether-http-core.version>
-		<ether-http-jetty12.version>4.0.0-v20260304</ether-http-jetty12.version>
-		<ether-json.version>4.0.0-v20260304</ether-json.version>
-		<ether-websocket-core.version>1.0.0-SNAPSHOT</ether-websocket-core.version>
-		<ether-websocket-jetty12.version>1.0.0-SNAPSHOT</ether-websocket-jetty12.version>
-		<jetty.version>12.1.6</jetty.version>
 	</properties>
 
 	<dependencies>
@@ -71,21 +64,23 @@
 		<dependency>
 			<groupId>org.glowroot</groupId>
 			<artifactId>glowroot-agent-api</artifactId>
-			<version>${glowroot-agent-api.version}</version>
 			<scope>provided</scope>
 		</dependency>
 
 		<!-- Ether HTTP (provided: consumer brings these) -->
 		<dependency>
+			<groupId>dev.rafex.ether.observability</groupId>
+			<artifactId>ether-observability-core</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
 			<groupId>dev.rafex.ether.http</groupId>
 			<artifactId>ether-http-core</artifactId>
-			<version>${ether-http-core.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>dev.rafex.ether.http</groupId>
 			<artifactId>ether-http-jetty12</artifactId>
-			<version>${ether-http-jetty12.version}</version>
 			<scope>provided</scope>
 		</dependency>
 
@@ -93,7 +88,6 @@
 		<dependency>
 			<groupId>dev.rafex.ether.json</groupId>
 			<artifactId>ether-json</artifactId>
-			<version>${ether-json.version}</version>
 			<scope>provided</scope>
 		</dependency>
 
@@ -101,13 +95,11 @@
 		<dependency>
 			<groupId>dev.rafex.ether.websocket</groupId>
 			<artifactId>ether-websocket-core</artifactId>
-			<version>${ether-websocket-core.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>dev.rafex.ether.websocket</groupId>
 			<artifactId>ether-websocket-jetty12</artifactId>
-			<version>${ether-websocket-jetty12.version}</version>
 			<scope>provided</scope>
 		</dependency>
 
@@ -115,19 +107,16 @@
 		<dependency>
 			<groupId>org.eclipse.jetty</groupId>
 			<artifactId>jetty-server</artifactId>
-			<version>${jetty.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.jetty.websocket</groupId>
 			<artifactId>jetty-websocket-jetty-api</artifactId>
-			<version>${jetty.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.jetty.websocket</groupId>
 			<artifactId>jetty-websocket-jetty-server</artifactId>
-			<version>${jetty.version}</version>
 			<scope>provided</scope>
 		</dependency>
 

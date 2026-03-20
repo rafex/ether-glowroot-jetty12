@@ -1,5 +1,7 @@
 package dev.rafex.ether.glowroot.jetty12;
 
+import org.glowroot.agent.api.Glowroot;
+
 /*-
  * #%L
  * ether-glowroot-jetty12
@@ -28,51 +30,55 @@ package dev.rafex.ether.glowroot.jetty12;
 
 import dev.rafex.ether.http.core.HttpHandler;
 import dev.rafex.ether.http.core.Middleware;
-import org.glowroot.agent.api.Glowroot;
 
 /**
  * Middleware that instruments HTTP requests with Glowroot APM.
  *
- * <p>Sets the Glowroot transaction type to {@code "Web"} and names each
+ * <p>
+ * Sets the Glowroot transaction type to {@code "Web"} and names each
  * transaction as {@code "METHOD /normalized/path"}, replacing dynamic path
  * segments (UUIDs, ObjectIds, numeric IDs) with canonical placeholders so that
- * Glowroot can aggregate similar endpoints.</p>
+ * Glowroot can aggregate similar endpoints.
+ * </p>
  *
- * <p>Usage — register once when building the Jetty server:</p>
+ * <p>
+ * Usage — register once when building the Jetty server:
+ * </p>
+ * 
  * <pre>{@code
  * middlewareRegistry.add(new GlowrootHttpMiddleware());
  * }</pre>
  */
 public final class GlowrootHttpMiddleware implements Middleware {
 
-	@Override
-	public HttpHandler wrap(final HttpHandler next) {
-		return exchange -> {
-			final var method = exchange.method();
-			final var path = exchange.path();
-			final var normalized = PathNormalizer.normalize(path);
+    @Override
+    public HttpHandler wrap(final HttpHandler next) {
+        return exchange -> {
+            final var method = exchange.method();
+            final var path = exchange.path();
+            final var normalized = PathNormalizer.normalize(path);
 
-			try {
-				Glowroot.setTransactionType("Web");
-				Glowroot.setTransactionName(method + " " + normalized);
-				Glowroot.addTransactionAttribute("http.method", method);
-				Glowroot.addTransactionAttribute("http.path", path == null ? "unknown" : path);
-				Glowroot.addTransactionAttribute("http.normalized_path", normalized);
-			} catch (final Throwable ignore) {
-				// Glowroot agent not present; do not affect the request
-			}
+            try {
+                Glowroot.setTransactionType("Web");
+                Glowroot.setTransactionName(method + " " + normalized);
+                Glowroot.addTransactionAttribute("http.method", method);
+                Glowroot.addTransactionAttribute("http.path", path == null ? "unknown" : path);
+                Glowroot.addTransactionAttribute("http.normalized_path", normalized);
+            } catch (final Throwable ignore) {
+                // Glowroot agent not present; do not affect the request
+            }
 
-			try {
-				return next.handle(exchange);
-			} catch (final Throwable t) {
-				try {
-					Glowroot.addTransactionAttribute("error", t.getClass().getName());
-					Glowroot.addTransactionAttribute("error.message", t.getMessage() == null ? "" : t.getMessage());
-				} catch (final Throwable ignore) {
-					// Glowroot agent not present; do not suppress original exception
-				}
-				throw t;
-			}
-		};
-	}
+            try {
+                return next.handle(exchange);
+            } catch (final Throwable t) {
+                try {
+                    Glowroot.addTransactionAttribute("error", t.getClass().getName());
+                    Glowroot.addTransactionAttribute("error.message", t.getMessage() == null ? "" : t.getMessage());
+                } catch (final Throwable ignore) {
+                    // Glowroot agent not present; do not suppress original exception
+                }
+                throw t;
+            }
+        };
+    }
 }

@@ -32,17 +32,22 @@ import dev.rafex.ether.http.core.Middleware;
 /**
  * Middleware that captures the HTTP response status code into Glowroot.
  *
- * <p>Wraps the {@link dev.rafex.ether.http.core.HttpExchange} with a
+ * <p>
+ * Wraps the {@link dev.rafex.ether.http.core.HttpExchange} with a
  * {@link StatusCapturingHttpExchange} decorator that intercepts every
  * response-writing call ({@code json}, {@code text}, {@code noContent},
- * {@code methodNotAllowed}, {@code options}) and records:</p>
+ * {@code methodNotAllowed}, {@code options}) and records:
+ * </p>
  * <ul>
- *   <li>{@code http.status} — numeric status code, e.g. {@code "200"}</li>
- *   <li>{@code http.status_class} — status family, e.g. {@code "2xx"}</li>
+ * <li>{@code http.status} — numeric status code, e.g. {@code "200"}</li>
+ * <li>{@code http.status_class} — status family, e.g. {@code "2xx"}</li>
  * </ul>
  *
- * <p>Usage — register after {@link GlowrootHttpMiddleware} so the transaction
- * name is already set when the status is recorded:</p>
+ * <p>
+ * Usage — register after {@link GlowrootHttpMiddleware} so the transaction name
+ * is already set when the status is recorded:
+ * </p>
+ * 
  * <pre>{@code
  * middlewareRegistry.add(new GlowrootHttpMiddleware());
  * middlewareRegistry.add(new GlowrootStatusCapturingMiddleware());
@@ -50,8 +55,8 @@ import dev.rafex.ether.http.core.Middleware;
  */
 public final class GlowrootStatusCapturingMiddleware implements Middleware {
 
-	@Override
-	public HttpHandler wrap(final HttpHandler next) {
-		return exchange -> next.handle(new StatusCapturingHttpExchange(exchange));
-	}
+    @Override
+    public HttpHandler wrap(final HttpHandler next) {
+        return exchange -> next.handle(new StatusCapturingHttpExchange(exchange));
+    }
 }

@@ -1,5 +1,10 @@
 package dev.rafex.ether.glowroot.jetty12;
 
+import java.util.Objects;
+import java.util.function.Function;
+
+import org.glowroot.agent.api.Glowroot;
+
 /*-
  * #%L
  * ether-glowroot-jetty12
@@ -29,54 +34,59 @@ package dev.rafex.ether.glowroot.jetty12;
 import dev.rafex.ether.http.core.HttpExchange;
 import dev.rafex.ether.http.core.HttpHandler;
 import dev.rafex.ether.http.core.Middleware;
-import org.glowroot.agent.api.Glowroot;
-
-import java.util.Objects;
-import java.util.UUID;
-import java.util.function.Function;
+import dev.rafex.ether.observability.core.request.RequestIdGenerator;
 
 /**
  * Middleware that records a correlation request ID as a Glowroot attribute.
  *
- * <p>Extracts the request ID via a configurable {@code idExtractor} function.
- * If no ID is found and {@code generateIfAbsent} is {@code true}, a random
- * UUID is generated. The resulting ID is stored under the
- * {@code request.id} transaction attribute, enabling correlation between
- * Glowroot traces and external log aggregators (Loki, ELK, etc.).</p>
+ * <p>
+ * Extracts the request ID via a configurable {@code idExtractor} function. If
+ * no ID is found and {@code generateIfAbsent} is {@code true}, a random UUID is
+ * generated. The resulting ID is stored under the {@code request.id}
+ * transaction attribute, enabling correlation between Glowroot traces and
+ * external log aggregators (Loki, ELK, etc.).
+ * </p>
  *
- * <p>For Jetty-specific extraction from the {@code X-Request-Id} header use
- * {@link GlowrootJettyExtractors#xRequestId()} as the extractor:</p>
+ * <p>
+ * For Jetty-specific extraction from the {@code X-Request-Id} header use
+ * {@link GlowrootJettyExtractors#xRequestId()} as the extractor:
+ * </p>
+ * 
  * <pre>{@code
- * middlewareRegistry.add(
- *     new GlowrootRequestIdMiddleware(GlowrootJettyExtractors.xRequestId(), true));
+ * middlewareRegistry.add(new GlowrootRequestIdMiddleware(GlowrootJettyExtractors.xRequestId(), true));
  * }</pre>
  */
 public final class GlowrootRequestIdMiddleware implements Middleware {
 
-	private final Function<HttpExchange, String> idExtractor;
-	private final boolean generateIfAbsent;
+    private final Function<HttpExchange, String> idExtractor;
+    private final RequestIdGenerator requestIdGenerator;
 
-	public GlowrootRequestIdMiddleware(final Function<HttpExchange, String> idExtractor,
-			final boolean generateIfAbsent) {
-		this.idExtractor = Objects.requireNonNull(idExtractor, "idExtractor must not be null");
-		this.generateIfAbsent = generateIfAbsent;
-	}
+    public GlowrootRequestIdMiddleware(final Function<HttpExchange, String> idExtractor,
+            final boolean generateIfAbsent) {
+        this(idExtractor, generateIfAbsent ? new GlowrootRequestIdGenerator() : null);
+    }
 
-	@Override
-	public HttpHandler wrap(final HttpHandler next) {
-		return exchange -> {
-			try {
-				String requestId = idExtractor.apply(exchange);
-				if ((requestId == null || requestId.isBlank()) && generateIfAbsent) {
-					requestId = UUID.randomUUID().toString();
-				}
-				if (requestId != null && !requestId.isBlank()) {
-					Glowroot.addTransactionAttribute("request.id", requestId);
-				}
-			} catch (final Throwable ignore) {
-				// Extractor or Glowroot failure must never affect the request
-			}
-			return next.handle(exchange);
-		};
-	}
+    public GlowrootRequestIdMiddleware(final Function<HttpExchange, String> idExtractor,
+            final RequestIdGenerator requestIdGenerator) {
+        this.idExtractor = Objects.requireNonNull(idExtractor, "idExtractor must not be null");
+        this.requestIdGenerator = requestIdGenerator;
+    }
+
+    @Override
+    public HttpHandler wrap(final HttpHandler next) {
+        return exchange -> {
+            try {
+                String requestId = idExtractor.apply(exchange);
+                if ((requestId == null || requestId.isBlank()) && requestIdGenerator != null) {
+                    requestId = requestIdGenerator.nextId();
+                }
+                if (requestId != null && !requestId.isBlank()) {
+                    Glowroot.addTransactionAttribute("request.id", requestId);
+                }
+            } catch (final Throwable ignore) {
+                // Extractor or Glowroot failure must never affect the request
+            }
+            return next.handle(exchange);
+        };
+    }
 }

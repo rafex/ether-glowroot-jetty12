@@ -1,5 +1,6 @@
 package dev.rafex.ether.glowroot.jetty12;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -73,7 +74,7 @@ import dev.rafex.ether.observability.core.request.RequestIdGenerator;
  * </ul>
  *
  * <h2>Usage (Jetty middleware / Kiwi-style registration)</h2>
- * 
+ *
  * <pre>{@code
  * final var glowroot = GlowrootJettyHandler.builder().healthPath("/health").requestIdHeader("X-Request-Id")
  *         .defaultSlowThreshold(2_000).userExtractor(ctx -> ctx instanceof MyAuthContext a ? a.subject() : null)
@@ -94,12 +95,12 @@ public final class GlowrootJettyHandler extends Handler.Wrapper {
 
     private GlowrootJettyHandler(final Handler next, final Builder builder) {
         super(next);
-        this.healthPaths = Set.copyOf(builder.healthPaths);
-        this.thresholdByNormalizedPath = Map.copyOf(builder.thresholds);
-        this.defaultThresholdMs = builder.defaultThresholdMs;
-        this.requestIdHeader = builder.requestIdHeader;
-        this.requestIdGenerator = builder.requestIdGenerator;
-        this.userExtractor = builder.userExtractor;
+        healthPaths = Set.copyOf(builder.healthPaths);
+        thresholdByNormalizedPath = Map.copyOf(builder.thresholds);
+        defaultThresholdMs = builder.defaultThresholdMs;
+        requestIdHeader = builder.requestIdHeader;
+        requestIdGenerator = builder.requestIdGenerator;
+        userExtractor = builder.userExtractor;
     }
 
     /** Returns a new {@link Builder}. */
@@ -142,7 +143,7 @@ public final class GlowrootJettyHandler extends Handler.Wrapper {
         // ── 3. Request ID ────────────────────────────────────────────────────
         if (requestIdHeader != null) {
             try {
-                String reqId = request.getHeaders().get(requestIdHeader);
+                var reqId = request.getHeaders().get(requestIdHeader);
                 if ((reqId == null || reqId.isBlank()) && requestIdGenerator != null) {
                     reqId = requestIdGenerator.nextId();
                 }
@@ -155,14 +156,14 @@ public final class GlowrootJettyHandler extends Handler.Wrapper {
 
         // ── 4. Delegate to next handler ──────────────────────────────────────
         try {
-            final boolean result = super.handle(request, response, callback);
+            final var result = super.handle(request, response, callback);
 
             // ── 5. Response status (available after synchronous handler) ─────
             try {
-                final int status = response.getStatus();
+                final var status = response.getStatus();
                 if (status > 0) {
                     Glowroot.addTransactionAttribute("http.status", String.valueOf(status));
-                    Glowroot.addTransactionAttribute("http.status_class", (status / 100) + "xx");
+                    Glowroot.addTransactionAttribute("http.status_class", status / 100 + "xx");
                 }
             } catch (final Throwable ignore) {
             }
@@ -220,9 +221,7 @@ public final class GlowrootJettyHandler extends Handler.Wrapper {
 
         /** Adds multiple health-check paths at once. */
         public Builder healthPaths(final String... paths) {
-            for (final var p : paths) {
-                healthPaths.add(p);
-            }
+            Collections.addAll(healthPaths, paths);
             return this;
         }
 
@@ -240,7 +239,7 @@ public final class GlowrootJettyHandler extends Handler.Wrapper {
          * Defaults to {@code 2 000} ms.
          */
         public Builder defaultSlowThreshold(final long thresholdMs) {
-            this.defaultThresholdMs = thresholdMs;
+            defaultThresholdMs = thresholdMs;
             return this;
         }
 
@@ -250,8 +249,8 @@ public final class GlowrootJettyHandler extends Handler.Wrapper {
          * @param header header to read (e.g. {@code "X-Request-Id"})
          */
         public Builder requestIdHeader(final String header) {
-            this.requestIdHeader = header;
-            this.requestIdGenerator = null;
+            requestIdHeader = header;
+            requestIdGenerator = null;
             return this;
         }
 
@@ -260,8 +259,8 @@ public final class GlowrootJettyHandler extends Handler.Wrapper {
          * generation when the header is absent.
          */
         public Builder requestIdHeader(final String header, final boolean generateIfAbsent) {
-            this.requestIdHeader = header;
-            this.requestIdGenerator = generateIfAbsent ? new GlowrootRequestIdGenerator() : null;
+            requestIdHeader = header;
+            requestIdGenerator = generateIfAbsent ? new GlowrootRequestIdGenerator() : null;
             return this;
         }
 
@@ -270,7 +269,7 @@ public final class GlowrootJettyHandler extends Handler.Wrapper {
          * a {@link RequestIdGenerator} when the header is absent.
          */
         public Builder requestIdHeader(final String header, final RequestIdGenerator requestIdGenerator) {
-            this.requestIdHeader = header;
+            requestIdHeader = header;
             this.requestIdGenerator = requestIdGenerator;
             return this;
         }
@@ -289,13 +288,13 @@ public final class GlowrootJettyHandler extends Handler.Wrapper {
          * <p>
          * Example for a custom {@code AuthContext} record:
          * </p>
-         * 
+         *
          * <pre>{@code
          * .userExtractor(ctx -> ctx instanceof MyAuthContext a ? a.subject() : null)
          * }</pre>
          */
         public Builder userExtractor(final Function<Object, String> extractor) {
-            this.userExtractor = extractor;
+            userExtractor = extractor;
             return this;
         }
 
@@ -307,7 +306,7 @@ public final class GlowrootJettyHandler extends Handler.Wrapper {
          * {@link dev.rafex.ether.http.jetty12.JettyMiddleware} and any Kiwi-style
          * {@code Middleware} functional interfaces:
          * </p>
-         * 
+         *
          * <pre>{@code
          * middlewareRegistry.add(glowrootBuilder::wrap);
          * }</pre>

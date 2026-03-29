@@ -28,6 +28,13 @@ package dev.rafex.ether.glowroot.jetty12;
 
 import java.util.regex.Pattern;
 
+/**
+ * Clase utilitaria para normalizar rutas de HTTP eliminando valores dinámicos (IDs, UUIDs, etc).
+ * <p>
+ * Esta clase se utiliza en el contexto de Glowroot para que las rutas similares se agrupen
+ * en el APM, evitando que cada ID diferente cree una métrica separada.
+ * </p>
+ */
 final class PathNormalizer {
 
     private static final Pattern UUID_PATTERN = Pattern

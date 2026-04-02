@@ -30,7 +30,7 @@ import java.util.function.Function;
 
 import dev.rafex.ether.http.core.HttpExchange;
 import dev.rafex.ether.http.jetty12.JettyAuthHandler;
-import dev.rafex.ether.http.jetty12.JettyHttpExchange;
+import dev.rafex.ether.http.jetty12.exchange.JettyHttpExchange;
 
 /**
  * Factory of Jetty-specific {@link HttpExchange} extractor functions for use

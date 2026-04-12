@@ -72,3 +72,6 @@ logs/
 .opencode/node_modules/
 # opencode — exportaciones de sesión
 session-ses_*.md
+
+# flatten-maven-plugin
+.flattened-pom.xml
